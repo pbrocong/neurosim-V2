@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "neurosim code (함수분리)",
+			"path": "."
+		},
+		{
+			"name": "degradation",
+			"path": "../../../연구실/ANN/degradation"
+		}
+	],
+	"settings": {}
+}

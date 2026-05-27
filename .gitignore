@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large datasets (kept on disk, not tracked)
+datasets/sign_mnist_*.csv
+data/
+
+# Generated results (kept on disk, not tracked)
+results/*.xlsx
+results/*.csv
+results/*.json
+
+# Editors / envs
+.vscode/
+.idea/
+*.swp
+.env
+venv/
+.venv/
