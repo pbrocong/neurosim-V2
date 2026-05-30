@@ -23,6 +23,39 @@ matplotlib.use("Agg")
 
 import gradio as gr
 
+
+# ---------------------------------------------------------------------------
+# Compatibility shim for gradio_client 4.x on Python 3.9.
+# Some builds choke when a JSON-schema node is a bare bool (e.g. a component's
+# `additionalProperties: true`): `get_type()` does `if "const" in schema` and
+# raises "argument of type 'bool' is not iterable" while building the API info.
+# It's non-fatal (gradio logs and continues) but litters the terminal, so we
+# short-circuit bool schema nodes to "Any".
+# ---------------------------------------------------------------------------
+try:
+    import gradio_client.utils as _gcu
+
+    _orig_js2pt = _gcu._json_schema_to_python_type
+
+    def _safe_js2pt(schema, defs=None):
+        if isinstance(schema, bool):
+            return "Any"
+        return _orig_js2pt(schema, defs)
+
+    _gcu._json_schema_to_python_type = _safe_js2pt
+
+    _orig_get_type = _gcu.get_type
+
+    def _safe_get_type(schema):
+        if isinstance(schema, bool):
+            return "Any"
+        return _orig_get_type(schema)
+
+    _gcu.get_type = _safe_get_type
+except Exception:
+    pass
+
+
 from gradio_app.schema import (
     KNOBS, KNOBS_BY_KEY, knobs_in, defaults,
     HEAVY_MODELS, MODEL_CHOICES, DATASET_CHOICES,
@@ -109,7 +142,12 @@ def _wire_deps_local(widgets: dict):
         dep_widgets = [widgets[dk] for dk, _ in deps]
         expected_vals = [exp for _, exp in deps]
 
-        def _handler(parent_val, _expected=expected_vals):
+        # Leading *args (VAR_POSITIONAL) keeps gradio's special_args() from
+        # walking named positional params — that walk evaluates a broken
+        # `OAuthProfile | None` union that crashes on some Python-3.9 gradio
+        # builds. With *args the introspection loop exits immediately.
+        def _handler(*args, _expected=expected_vals):
+            parent_val = args[0] if args else None
             return [gr.update(interactive=(parent_val == ev)) for ev in _expected]
 
         widgets[parent_key].change(_handler, [widgets[parent_key]], dep_widgets)
@@ -216,7 +254,8 @@ def _make_export_handler(widget_keys: list[str]):
 
 
 def _make_import_handler(widget_keys: list[str]):
-    def handler(file_obj):
+    def handler(*args):                      # *args: see _handler note above
+        file_obj = args[0] if args else None
         if file_obj is None:
             updates = [gr.update() for _ in widget_keys]
             return ["No file uploaded."] + updates
