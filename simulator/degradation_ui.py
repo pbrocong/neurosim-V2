@@ -19,8 +19,9 @@ from train_eval import train, train_online, test
 # Default paths: prefer the V2-local device xlsx; fall back to the legacy
 # absolute paths for users who still have the original layout on disk.
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.dirname(_THIS_DIR)
 _DEFAULT_V2_XLSX = getattr(config, "DEFAULT_DEVICE_XLSX",
-                           os.path.join(_THIS_DIR, "datasets", "zno_encap_48h",
+                           os.path.join(_ROOT, "datasets", "zno_encap_48h",
                                         "0627_Pulse characteristic#1.xlsx"))
 _LEGACY_N = "/Users/parkhyungbin/Desktop/연구실/ANN/neurosim code (함수분리)/정상소자.xlsx"
 _LEGACY_D = "/Users/parkhyungbin/Desktop/연구실/ANN/neurosim code (함수분리)/열화소자.xlsx"

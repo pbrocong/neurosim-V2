@@ -1,16 +1,31 @@
 # config.py
 import os
 
-# --- 경로 설정 (ASL 데이터셋 경로 - V2 폴더 안의 CSV 사용) ---
-# auto-discover sign_mnist CSVs relative to this file so the code works on
-# any machine without hard-coded absolute paths.
+# --- 경로 설정 -------------------------------------------------------------
+# datasets/ and data/ are resolved as absolute paths so the code works
+# regardless of the current working directory. Two layouts are supported:
+#   • repo layout : this file is <repo>/simulator/config.py, datasets/ at <repo>/
+#   • flat layout : this file sits next to datasets/ (Hugging Face Space deploy)
+# We pick whichever parent actually contains a datasets/ folder.
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-ASL_TRAIN_PATH = os.path.join(_THIS_DIR, "datasets", "sign_mnist_train.csv")
-ASL_TEST_PATH  = os.path.join(_THIS_DIR, "datasets", "sign_mnist_test.csv")
+
+
+def _resolve_root():
+    for cand in (_THIS_DIR, os.path.dirname(_THIS_DIR)):
+        if os.path.isdir(os.path.join(cand, "datasets")):
+            return cand
+    return os.path.dirname(_THIS_DIR)   # default to repo layout
+
+
+_ROOT = _resolve_root()
+
+DATA_DIR = os.path.join(_ROOT, "data")               # torchvision download cache
+ASL_TRAIN_PATH = os.path.join(_ROOT, "datasets", "sign_mnist_train.csv")
+ASL_TEST_PATH  = os.path.join(_ROOT, "datasets", "sign_mnist_test.csv")
 
 # Default device characteristic for non-interactive runs.
 DEFAULT_DEVICE_XLSX = os.path.join(
-    _THIS_DIR, "datasets", "zno_encap_48h", "0627_Pulse characteristic#1.xlsx"
+    _ROOT, "datasets", "zno_encap_48h", "0627_Pulse characteristic#1.xlsx"
 )
 
 # --- 하이퍼파라미터 ---

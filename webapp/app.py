@@ -1,12 +1,23 @@
 """NeuroSim V2 — Gradio web UI.
 
-Single deployable entry point. On Hugging Face Spaces this file is auto-run
-by the runtime; locally:  `python app.py`.
+Single deployable entry point. Run from the repo root:  `python webapp/app.py`.
+On Hugging Face Spaces this file is auto-run by the runtime (see DEPLOY.md).
 
-All ~60 hyperparameters are exposed; categorical accordions group them.
+All hyperparameters are exposed; categorical accordions group them.
 JSON export/import lets researchers persist and share configurations.
 """
 from __future__ import annotations
+import os
+import sys
+
+# Make the core simulator modules (config, models, train_eval, ...) importable.
+# They live in  <repo>/simulator/ ; this file lives in  <repo>/webapp/ .
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_ROOT = os.path.dirname(_HERE)
+for _p in (os.path.join(_ROOT, "simulator"), _HERE):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
+
 import matplotlib
 matplotlib.use("Agg")
 

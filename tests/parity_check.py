@@ -14,7 +14,13 @@ warnings.filterwarnings("ignore")
 
 import os
 import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# simulator/ holds the core modules (config, headless_runner, ...);
+# webapp/ holds the gradio_app package. Add both to the path.
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+for _p in (os.path.join(_ROOT, "simulator"), os.path.join(_ROOT, "webapp")):
+    if _p not in sys.path:
+        sys.path.insert(0, _p)
 
 import matplotlib
 matplotlib.use("Agg")

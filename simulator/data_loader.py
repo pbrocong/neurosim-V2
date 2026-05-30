@@ -37,8 +37,8 @@ def _balance_classwise(test_dataset, targets_array, num_classes):
 
 def get_mnist_loaders(batch_size, balanced_test=False):
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
-    train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
-    test_dataset = datasets.MNIST('./data', train=False, download=True, transform=transform)
+    train_dataset = datasets.MNIST(config.DATA_DIR, train=True, download=True, transform=transform)
+    test_dataset = datasets.MNIST(config.DATA_DIR, train=False, download=True, transform=transform)
 
     if balanced_test:
         test_dataset = _balance_classwise(test_dataset, test_dataset.targets.numpy(), 10)
@@ -52,8 +52,8 @@ def get_mnist_loaders(batch_size, balanced_test=False):
 
 def get_fashion_mnist_loaders(batch_size, balanced_test=False):
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.2860,), (0.3530,))])
-    train_dataset = datasets.FashionMNIST('./data', train=True, download=True, transform=transform)
-    test_dataset = datasets.FashionMNIST('./data', train=False, download=True, transform=transform)
+    train_dataset = datasets.FashionMNIST(config.DATA_DIR, train=True, download=True, transform=transform)
+    test_dataset = datasets.FashionMNIST(config.DATA_DIR, train=False, download=True, transform=transform)
 
     if balanced_test:
         test_dataset = _balance_classwise(test_dataset, test_dataset.targets.numpy(), 10)
@@ -67,8 +67,8 @@ def get_fashion_mnist_loaders(batch_size, balanced_test=False):
 
 def get_kmnist_loaders(batch_size, balanced_test=False):
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1918,), (0.3483,))])
-    train_dataset = datasets.KMNIST('./data', train=True, download=True, transform=transform)
-    test_dataset = datasets.KMNIST('./data', train=False, download=True, transform=transform)
+    train_dataset = datasets.KMNIST(config.DATA_DIR, train=True, download=True, transform=transform)
+    test_dataset = datasets.KMNIST(config.DATA_DIR, train=False, download=True, transform=transform)
 
     if balanced_test:
         test_dataset = _balance_classwise(test_dataset, test_dataset.targets.numpy(), 10)
@@ -92,8 +92,8 @@ def _cifar_transform():
 
 def get_cifar10_loaders(batch_size, balanced_test=False):
     transform = _cifar_transform()
-    train_dataset = datasets.CIFAR10('./data', train=True, download=True, transform=transform)
-    test_dataset = datasets.CIFAR10('./data', train=False, download=True, transform=transform)
+    train_dataset = datasets.CIFAR10(config.DATA_DIR, train=True, download=True, transform=transform)
+    test_dataset = datasets.CIFAR10(config.DATA_DIR, train=False, download=True, transform=transform)
 
     if balanced_test:
         test_dataset = _balance_classwise(test_dataset, np.array(test_dataset.targets), 10)
@@ -107,8 +107,8 @@ def get_cifar10_loaders(batch_size, balanced_test=False):
 
 def get_cifar100_loaders(batch_size, balanced_test=False):
     transform = _cifar_transform()
-    train_dataset = datasets.CIFAR100('./data', train=True, download=True, transform=transform)
-    test_dataset = datasets.CIFAR100('./data', train=False, download=True, transform=transform)
+    train_dataset = datasets.CIFAR100(config.DATA_DIR, train=True, download=True, transform=transform)
+    test_dataset = datasets.CIFAR100(config.DATA_DIR, train=False, download=True, transform=transform)
 
     if balanced_test:
         test_dataset = _balance_classwise(test_dataset, np.array(test_dataset.targets), 100)
