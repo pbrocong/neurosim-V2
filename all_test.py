@@ -20,7 +20,6 @@ numbers match what you'd get by running main.py manually.
 from __future__ import annotations
 import argparse
 import csv
-import itertools
 import json
 import os
 import sys
@@ -187,7 +186,7 @@ def main():
                     help="comma-separated subset (default: all 6 datasets)")
     ap.add_argument("--augment", choices=["both", "on", "off"], default="both",
                     help="enumerate augmentation on+off (both), or fix it")
-    ap.add_argument("--epochs", type=int, default=5)
+    ap.add_argument("--epochs", type=int, default=10)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--sweep-modes", action="store_true",
                     help="also enumerate pair/online/sigma_d2d (×12)")
