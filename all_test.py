@@ -54,9 +54,9 @@ DEFAULT_MODELS = [
 DEFAULT_DATASETS = list(schema.DATASET_CHOICES)        # 6 datasets
 HEAVY_MODELS = schema.HEAVY_MODELS                     # VGG / AlexNet / ResNet18
 
-# Mode-toggle axes, only enumerated with --sweep-modes
+# Mode-toggle axes, only enumerated with --sweep-modes.
+# (Online/batch-1 mode is intentionally NOT swept — far too slow on CPU.)
 PAIR_AXIS = [(False, "mixed"), (True, "mixed"), (True, "ltp_only")]
-ONLINE_AXIS = [False, True]
 D2D_AXIS = [0.0, 0.1]
 
 CSV_COLUMNS = [
@@ -171,29 +171,30 @@ def build_combinations(args):
     else:
         augs = [False, True]
 
+    # Online (batch=1) mode is excluded entirely — it is ~50x slower than
+    # mini-batch and made the sweep take weeks. Mode sweep = pair × d2d only.
     if args.sweep_modes:
-        pair_axis, online_axis, d2d_axis = PAIR_AXIS, ONLINE_AXIS, D2D_AXIS
+        pair_axis, d2d_axis = PAIR_AXIS, D2D_AXIS
     else:
-        pair_axis, online_axis, d2d_axis = [(False, "mixed")], [False], [0.0]
+        pair_axis, d2d_axis = [(False, "mixed")], [0.0]
 
     for dev_label, dev_path in devices:
         for model in args.models:
             for dataset in args.datasets:
                 for aug in augs:
                     for (pair_mode, pair_strategy) in pair_axis:
-                        for online in online_axis:
-                            for d2d in d2d_axis:
-                                yield {
-                                    "device_label": dev_label,
-                                    "device_path": dev_path,
-                                    "model_name": model,
-                                    "dataset_name": dataset,
-                                    "asl_augment": aug,
-                                    "pair_mode": pair_mode,
-                                    "pair_strategy": pair_strategy,
-                                    "online": online,
-                                    "sigma_d2d": d2d,
-                                }
+                        for d2d in d2d_axis:
+                            yield {
+                                "device_label": dev_label,
+                                "device_path": dev_path,
+                                "model_name": model,
+                                "dataset_name": dataset,
+                                "asl_augment": aug,
+                                "pair_mode": pair_mode,
+                                "pair_strategy": pair_strategy,
+                                "online": False,
+                                "sigma_d2d": d2d,
+                            }
 
 
 def make_knobs(combo, args):
@@ -329,7 +330,7 @@ def main():
     print(f"  models     : {args.models}")
     print(f"  datasets   : {args.datasets}")
     print(f"  augment    : {args.augment}")
-    print(f"  sweep-modes: {args.sweep_modes}")
+    print(f"  sweep-modes: {args.sweep_modes}   (pair × d2d; online excluded)")
     print(f"  epochs     : {args.epochs}"
           + (f"   (max_train_batches={args.max_train_batches})" if args.max_train_batches else ""))
     print(f"  TOTAL RUNS : {total}")
