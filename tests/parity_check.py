@@ -100,6 +100,9 @@ def run_gradio(model, dataset, use_bn, loss_mode, adv):
     k["learning_rate"] = config.LEARNING_RATE
     k["pulse_scaling_factor"] = config.PULSE_SCALING_FACTOR
     k["target_min"], k["target_max"] = config.TARGET_RANGE
+    # headless augments ASL only (get_asl_loaders default) and never the
+    # torchvision datasets; mirror that so the augment flag matches.
+    k["asl_augment"] = (dataset.upper() == "ASL")
     # advanced overrides (note: headless seeds d2d with `seed`, so mirror that)
     k["use_c2c_noise"] = adv.get("use_c2c", True)
     k["use_discretisation"] = adv.get("use_disc", False)

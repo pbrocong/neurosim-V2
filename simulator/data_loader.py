@@ -35,10 +35,25 @@ def _balance_classwise(test_dataset, targets_array, num_classes):
     return Subset(test_dataset, balanced_indices)
 
 
-def get_mnist_loaders(batch_size, balanced_test=False):
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))])
-    train_dataset = datasets.MNIST(config.DATA_DIR, train=True, download=True, transform=transform)
-    test_dataset = datasets.MNIST(config.DATA_DIR, train=False, download=True, transform=transform)
+# Light augmentation applied to the *train* stream of any 28x28 grayscale
+# dataset when augment=True (matches the ASL augmentation style). Operates on
+# PIL images, so it goes before ToTensor.
+def _aug_affine():
+    return transforms.RandomAffine(degrees=10, translate=(0.08, 0.08), scale=(0.9, 1.1))
+
+
+def _mnist_like_transforms(mean, std, augment):
+    norm = transforms.Normalize((mean,), (std,))
+    aug = [_aug_affine()] if augment else []
+    train_tf = transforms.Compose(aug + [transforms.ToTensor(), norm])
+    test_tf = transforms.Compose([transforms.ToTensor(), norm])
+    return train_tf, test_tf
+
+
+def get_mnist_loaders(batch_size, balanced_test=False, augment=False):
+    train_tf, test_tf = _mnist_like_transforms(0.1307, 0.3081, augment)
+    train_dataset = datasets.MNIST(config.DATA_DIR, train=True, download=True, transform=train_tf)
+    test_dataset = datasets.MNIST(config.DATA_DIR, train=False, download=True, transform=test_tf)
 
     if balanced_test:
         test_dataset = _balance_classwise(test_dataset, test_dataset.targets.numpy(), 10)
@@ -50,10 +65,10 @@ def get_mnist_loaders(batch_size, balanced_test=False):
     return train_loader, test_loader
 
 
-def get_fashion_mnist_loaders(batch_size, balanced_test=False):
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.2860,), (0.3530,))])
-    train_dataset = datasets.FashionMNIST(config.DATA_DIR, train=True, download=True, transform=transform)
-    test_dataset = datasets.FashionMNIST(config.DATA_DIR, train=False, download=True, transform=transform)
+def get_fashion_mnist_loaders(batch_size, balanced_test=False, augment=False):
+    train_tf, test_tf = _mnist_like_transforms(0.2860, 0.3530, augment)
+    train_dataset = datasets.FashionMNIST(config.DATA_DIR, train=True, download=True, transform=train_tf)
+    test_dataset = datasets.FashionMNIST(config.DATA_DIR, train=False, download=True, transform=test_tf)
 
     if balanced_test:
         test_dataset = _balance_classwise(test_dataset, test_dataset.targets.numpy(), 10)
@@ -65,10 +80,10 @@ def get_fashion_mnist_loaders(batch_size, balanced_test=False):
     return train_loader, test_loader
 
 
-def get_kmnist_loaders(batch_size, balanced_test=False):
-    transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.1918,), (0.3483,))])
-    train_dataset = datasets.KMNIST(config.DATA_DIR, train=True, download=True, transform=transform)
-    test_dataset = datasets.KMNIST(config.DATA_DIR, train=False, download=True, transform=transform)
+def get_kmnist_loaders(batch_size, balanced_test=False, augment=False):
+    train_tf, test_tf = _mnist_like_transforms(0.1918, 0.3483, augment)
+    train_dataset = datasets.KMNIST(config.DATA_DIR, train=True, download=True, transform=train_tf)
+    test_dataset = datasets.KMNIST(config.DATA_DIR, train=False, download=True, transform=test_tf)
 
     if balanced_test:
         test_dataset = _balance_classwise(test_dataset, test_dataset.targets.numpy(), 10)
@@ -80,20 +95,20 @@ def get_kmnist_loaders(batch_size, balanced_test=False):
     return train_loader, test_loader
 
 
-def _cifar_transform():
+def _cifar_transform(augment=False):
     # RGB CIFAR -> grayscale 28x28 (기존 1ch 28x28 모델 호환용)
-    return transforms.Compose([
-        transforms.Grayscale(num_output_channels=1),
-        transforms.Resize((28, 28)),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5,), (0.5,)),
-    ])
+    pre = [transforms.Grayscale(num_output_channels=1), transforms.Resize((28, 28))]
+    aug = [_aug_affine()] if augment else []
+    return transforms.Compose(
+        pre + aug + [transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))]
+    )
 
 
-def get_cifar10_loaders(batch_size, balanced_test=False):
-    transform = _cifar_transform()
-    train_dataset = datasets.CIFAR10(config.DATA_DIR, train=True, download=True, transform=transform)
-    test_dataset = datasets.CIFAR10(config.DATA_DIR, train=False, download=True, transform=transform)
+def get_cifar10_loaders(batch_size, balanced_test=False, augment=False):
+    train_dataset = datasets.CIFAR10(config.DATA_DIR, train=True, download=True,
+                                     transform=_cifar_transform(augment))
+    test_dataset = datasets.CIFAR10(config.DATA_DIR, train=False, download=True,
+                                    transform=_cifar_transform(False))
 
     if balanced_test:
         test_dataset = _balance_classwise(test_dataset, np.array(test_dataset.targets), 10)
@@ -105,10 +120,11 @@ def get_cifar10_loaders(batch_size, balanced_test=False):
     return train_loader, test_loader
 
 
-def get_cifar100_loaders(batch_size, balanced_test=False):
-    transform = _cifar_transform()
-    train_dataset = datasets.CIFAR100(config.DATA_DIR, train=True, download=True, transform=transform)
-    test_dataset = datasets.CIFAR100(config.DATA_DIR, train=False, download=True, transform=transform)
+def get_cifar100_loaders(batch_size, balanced_test=False, augment=False):
+    train_dataset = datasets.CIFAR100(config.DATA_DIR, train=True, download=True,
+                                      transform=_cifar_transform(augment))
+    test_dataset = datasets.CIFAR100(config.DATA_DIR, train=False, download=True,
+                                     transform=_cifar_transform(False))
 
     if balanced_test:
         test_dataset = _balance_classwise(test_dataset, np.array(test_dataset.targets), 100)
@@ -153,13 +169,17 @@ DATASET_REGISTRY = {
 }
 
 
-def get_loaders(dataset_name, batch_size, balanced_test=False):
-    """데이터셋 이름으로 (train_loader, test_loader, num_classes) 반환."""
+def get_loaders(dataset_name, batch_size, balanced_test=False, augment=False):
+    """데이터셋 이름으로 (train_loader, test_loader, num_classes) 반환.
+
+    augment=True 면 train 스트림에 가벼운 RandomAffine 증강을 적용한다.
+    """
     if dataset_name not in DATASET_REGISTRY:
         raise ValueError(f"Unknown dataset: {dataset_name}. "
                          f"Available: {list(DATASET_REGISTRY.keys()) + ['ASL']}")
     info = DATASET_REGISTRY[dataset_name]
-    train_loader, test_loader = info["loader"](batch_size, balanced_test=balanced_test)
+    train_loader, test_loader = info["loader"](
+        batch_size, balanced_test=balanced_test, augment=augment)
     return train_loader, test_loader, info["num_classes"]
 
 class SignMNISTDataset(Dataset):

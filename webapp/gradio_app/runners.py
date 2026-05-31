@@ -61,6 +61,7 @@ def _load_dataset(name: str, batch_size: int, balanced_test: bool, asl_augment: 
         return train_loader, test_loader, 24
     train_loader, test_loader, nc = get_loaders(
         name, batch_size, balanced_test=bool(balanced_test),
+        augment=bool(asl_augment),
     )
     return train_loader, test_loader, nc
 
@@ -129,11 +130,14 @@ def _energy_params_from_knobs(knobs: dict) -> dict:
 # ---------------------------------------------------------------------------
 # Quick Run
 # ---------------------------------------------------------------------------
-def run_quick(knobs: dict, progress_cb=None) -> dict:
+def run_quick(knobs: dict, progress_cb=None, make_figures: bool = True) -> dict:
     """One full training run with the given knobs.
 
-    Returns a dict containing history, energy report, and matplotlib figures.
-    `progress_cb(epoch, total_epochs, status_str)` is called once per epoch.
+    Returns a dict containing history, energy report, and (optionally)
+    matplotlib figures. `progress_cb(epoch, total_epochs, status_str)` is
+    called once per epoch. `make_figures=False` skips figure generation —
+    useful for large batch sweeps (e.g. all_test.py) where only the numbers
+    are kept; the "figures" key is then an empty dict.
     """
     torch.manual_seed(int(knobs["seed"]))
     np.random.seed(int(knobs["seed"]))
@@ -149,7 +153,7 @@ def run_quick(knobs: dict, progress_cb=None) -> dict:
         bool(knobs["balanced_test"]),
         bool(knobs["asl_augment"]),
     )
-    train_loader_eff = _maybe_subsample_loader(train_loader, int(knobs["max_train_batches"]))
+    train_loader_eff = _maybe_subsample_loader(train_loader, int(knobs.get("max_train_batches", 0)))
 
     factory, default_loss = _model_factory(knobs["model_name"], bool(knobs["use_batchnorm"]))
     w_min, w_max = float(knobs["target_min"]), float(knobs["target_max"])
@@ -203,11 +207,14 @@ def run_quick(knobs: dict, progress_cb=None) -> dict:
 
     energy = optimizer.energy_report()
 
-    figs = {
-        "accuracy": _fig_accuracy(history),
-        "confusion": _fig_confusion(preds_last, targets_last,
-                                    get_class_names(knobs["dataset_name"], num_classes)),
-    }
+    if make_figures:
+        figs = {
+            "accuracy": _fig_accuracy(history),
+            "confusion": _fig_confusion(preds_last, targets_last,
+                                        get_class_names(knobs["dataset_name"], num_classes)),
+        }
+    else:
+        figs = {}
     return {
         "history": history,
         "final_train_acc": history[-1]["train_acc"] if history else 0.0,
