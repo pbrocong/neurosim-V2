@@ -333,14 +333,26 @@ class NeuroSimFitter:
         ltd_fit_real = self._unscale(ltd_fit_s)
         ltp_fit_norm = self._normalize_0_1_real(ltp_fit_real)
         ltd_fit_norm = self._normalize_0_1_real(ltd_fit_real)
-        plt.figure(figsize=(10, 6))
-        plt.scatter(ltp_p_e, ltp_g_norm, s=18, alpha=0.7, label="LTP data")
-        plt.scatter(ltd_p_e, ltd_g_norm, s=18, alpha=0.7, label="LTD data")
+        # Split the two branches by pulse polarity on a single shared axis:
+        #   positive pulses (LTP / potentiation)  → right half  (x > 0)
+        #   negative pulses (LTD / depression)    → left half   (x < 0)
+        # so the two curves no longer overlap at a common rezeroed origin.
         ord_ltp = np.argsort(ltp_p_e); ord_ltd = np.argsort(ltd_p_e)
-        plt.plot(ltp_p_e[ord_ltp], ltp_fit_norm[ord_ltp], lw=2, label="LTP fit")
-        plt.plot(ltd_p_e[ord_ltd], ltd_fit_norm[ord_ltd], lw=2, label="LTD fit")
+        plt.figure(figsize=(10, 6))
+        # LTP on the positive-pulse side
+        plt.scatter(ltp_p_e, ltp_g_norm, s=18, alpha=0.7,
+                    color="tab:red", label="LTP data (positive pulses)")
+        plt.plot(ltp_p_e[ord_ltp], ltp_fit_norm[ord_ltp], lw=2,
+                 color="tab:red", label="LTP fit")
+        # LTD mirrored onto the negative-pulse side
+        plt.scatter(-ltd_p_e, ltd_g_norm, s=18, alpha=0.7,
+                    color="tab:blue", label="LTD data (negative pulses)")
+        plt.plot(-ltd_p_e[ord_ltd], ltd_fit_norm[ord_ltd], lw=2,
+                 color="tab:blue", label="LTD fit")
+        plt.axvline(0.0, color="gray", lw=1.0, ls="--")
         plt.ylim(-0.05, 1.05)
-        plt.xlabel("Pulse # (rezeroed)"); plt.ylabel("Normalised G (0~1)")
+        plt.xlabel("← negative pulses (LTD)      |      positive pulses (LTP) →")
+        plt.ylabel("Normalised G (0~1)")
         plt.title(f"NeuroSim V3 fit {title_suffix}")
         plt.grid(True, alpha=0.3); plt.legend(); plt.tight_layout()
         try:

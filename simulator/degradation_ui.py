@@ -361,15 +361,19 @@ def plot_fitter_preview(normal_fitter: NeuroSimFitter,
         ltp_fit_n = fitter._normalize_0_1_real(ltp_fit)
         ltd_fit_n = fitter._normalize_0_1_real(ltd_fit)
 
-        ax.scatter(ltp_p, ltp_n, s=10, alpha=0.5, color=color)
-        ax.scatter(ltd_p, ltd_n, s=10, alpha=0.5, color=color)
-        ax.plot(np.sort(ltp_p), ltp_fit_n[np.argsort(ltp_p)], color=color, linewidth=2,
+        # positive pulses (LTP) on the right, negative pulses (LTD) on the left
+        ltp_x = ltp_p - ltp_p.min()
+        ltd_x = -(ltd_p - ltd_p.min())
+        ax.scatter(ltp_x, ltp_n, s=10, alpha=0.5, color=color)
+        ax.scatter(ltd_x, ltd_n, s=10, alpha=0.5, color=color)
+        ax.plot(np.sort(ltp_x), ltp_fit_n[np.argsort(ltp_x)], color=color, linewidth=2,
                 label=f"{tag} LTP fit")
-        ax.plot(np.sort(ltd_p), ltd_fit_n[np.argsort(ltd_p)], color=color, linewidth=2,
+        ax.plot(np.sort(ltd_x), ltd_fit_n[np.argsort(ltd_x)], color=color, linewidth=2,
                 linestyle="--", label=f"{tag} LTD fit")
 
+    ax.axvline(0.0, color="gray", lw=1.0, ls="--")
     ax.set_ylim(-0.05, 1.05)
-    ax.set_xlabel("PulseNum")
+    ax.set_xlabel("← negative pulses (LTD)   |   positive pulses (LTP) →")
     ax.set_ylabel("Normalized Conductance (0~1)")
     ax.set_title("LTP / LTD Fit Preview (Normal vs Degraded)")
     ax.grid(True, alpha=0.3)
