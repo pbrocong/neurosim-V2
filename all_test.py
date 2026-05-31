@@ -46,10 +46,10 @@ from gradio_app import runners
 # ---------------------------------------------------------------------------
 # Default axes — the choices main.py exposes
 # ---------------------------------------------------------------------------
-# main.py's 7 models (SimpleNet here follows config.USE_BATCHNORM, like main.py).
+# Light models only by default — VGG / AlexNet / ResNet18 are far too heavy
+# on CPU. They are still selectable explicitly via --models if you want them.
 DEFAULT_MODELS = [
     "SimpleNet", "Simple_CNN", "Standard_CNN", "LeNet5",
-    "VGG", "AlexNet", "ResNet18",
 ]
 DEFAULT_DATASETS = list(schema.DATASET_CHOICES)        # 6 datasets
 HEAVY_MODELS = schema.HEAVY_MODELS                     # VGG / AlexNet / ResNet18
@@ -283,8 +283,11 @@ def main():
                     help="enumerate augmentation on+off (both), or fix it")
     ap.add_argument("--epochs", type=int, default=10)
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--sweep-modes", action="store_true",
-                    help="also enumerate pair/online/sigma_d2d (×12)")
+    ap.add_argument("--sweep-modes", action=argparse.BooleanOptionalAction, default=True,
+                    help="enumerate pair/online/sigma_d2d too (×12). Default ON "
+                         "(2016 runs); use --no-sweep-modes for the 168-run base set.")
+    ap.add_argument("-y", "--yes", action="store_true",
+                    help="skip the confirmation prompt before a large run")
     ap.add_argument("--max-train-batches", type=int, default=0,
                     help="cap batches per epoch for quick smoke runs (0 = no cap)")
     ap.add_argument("--out", default=None,
@@ -346,6 +349,16 @@ def main():
         print(f"\n(dry-run) {total} runs would execute. Nothing was trained.")
         return 0
 
+    # Confirm before a long run (skippable with --yes / -y).
+    if not args.yes and total > 200:
+        try:
+            ans = input(f"\n정말 {total}개 조합을 실행할까요? 오래 걸릴 수 있습니다. [y/N]: ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            ans = ""
+        if ans not in ("y", "yes"):
+            print("취소되었습니다. (--no-sweep-modes 로 96개만, 또는 --models/--datasets 로 줄일 수 있습니다)")
+            return 0
+
     out_dir = args.out or os.path.join(
         _HERE, "results", f"all_test_{datetime.now():%Y%m%d_%H%M%S}")
     os.makedirs(out_dir, exist_ok=True)
@@ -406,6 +419,15 @@ def main():
     print(f"  각 실행별   : <device>/<model>/<dataset>_aug-*/{{accuracy,confusion}}.png + metrics.json")
     print("=" * 64)
     print(summary_txt)
+
+    # Auto-run the full analysis on the just-finished results.
+    print("\n결과 분석을 실행합니다...")
+    try:
+        import analyze_results
+        analyze_results.analyze(out_dir)
+    except Exception as e:
+        print(f"(분석 자동 실행을 건너뜀: {e})")
+        print(f" 수동 실행: python analyze_results.py \"{out_dir}\"")
     return 0
 
 

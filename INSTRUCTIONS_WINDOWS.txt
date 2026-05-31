@@ -1,0 +1,86 @@
+============================================================
+ NeuroSim V2 — Windows 서버 실행 안내
+============================================================
+
+[0] 준비물
+    - Python 3.9 이상 (3.10/3.11 권장)
+      https://www.python.org/downloads/  에서 설치
+      설치 시 "Add Python to PATH" 체크 필수.
+    - 인터넷 연결 (처음 1회: 라이브러리 + MNIST류 데이터셋 자동 다운로드)
+
+------------------------------------------------------------
+[1] 압축 풀기
+    이 zip 을 서버의 원하는 폴더에 풀면 됩니다.
+    예) C:\neurosim-v2\
+
+------------------------------------------------------------
+[2] 라이브러리 설치 (최초 1회)
+    폴더에서 명령 프롬프트(cmd) 를 열고:
+
+        cd C:\neurosim-v2
+        python -m pip install -r requirements.txt
+
+    (torch 가 처음엔 수백 MB 라 시간이 걸립니다)
+
+------------------------------------------------------------
+[3] 전체 자동 테스트 실행  (all_test)
+    더블클릭:  run_all_test.bat
+    또는 cmd 에서:
+
+        python all_test.py
+
+    실행하면 좋은 소자 / 나쁜 소자 의 LTP·LTD xlsx 경로를
+    차례로 물어봅니다. 경로를 붙여넣고 Enter.
+
+    *** 돌리는 조합 ***
+      - 기본 모델 4종(SimpleNet, Simple_CNN, Standard_CNN, LeNet5)
+        × 데이터셋 6종 × augmentation(on/off) × 소자(good/bad)
+        × V3.0 모드(pair 3 × online 2 × d2d 2)
+        = 1152 runs  (각 10 epoch)
+      - VGG/AlexNet/ResNet18 은 CPU 에서 너무 무거워 기본 제외.
+      - 1152 는 오래 걸리므로 실행 전 [y/N] 확인을 물어봅니다.
+
+    옵션:
+      python all_test.py --no-sweep-modes      → 96 runs (모드 토글 제외)
+      python all_test.py --dry-run             → 실제 실행 없이 개수/목록만
+      python all_test.py --models SimpleNet --datasets MNIST   → 일부만
+      python all_test.py -y                    → 확인 프롬프트 건너뛰기
+      python all_test.py -h                    → 전체 옵션
+
+    *** 끝나면 자동으로 결과 분석까지 실행됩니다. ***
+    results\all_test_<날짜시각>\ 폴더에:
+        summary.csv / summary.json   : 전체 결과 표
+        summary.txt                  : 분류별(소자/모델/데이터셋/augment) 요약
+        <소자>\<모델>\<데이터셋>_aug-*\
+            accuracy.png             : epoch 별 정확도
+            confusion.png            : 클래스 이름이 붙은 confusion matrix
+            metrics.json             : 그 실행의 모든 수치
+        analysis\                    : 분석 결과
+            device_good_vs_bad.png       (좋은/나쁜 소자 비교 산점도)
+            device_gap_heatmap.png       (good-bad 격차 히트맵)
+            acc_heatmap_model_dataset.png
+            factor_effects.png           (요인별 평균 정확도)
+            acc_vs_energy.png
+            analysis_report.md           (텍스트 요약)
+
+------------------------------------------------------------
+[4] 분석만 다시 실행하고 싶을 때
+        python analyze_results.py
+        python analyze_results.py results\all_test_<날짜시각>
+    (인자 없으면 가장 최근 결과 폴더를 자동으로 분석)
+
+------------------------------------------------------------
+[5] 웹 UI 실행 (선택)
+    더블클릭:  run_webapp.bat
+    또는:  python webapp\app.py
+    브라우저에서  http://127.0.0.1:7860  접속.
+
+------------------------------------------------------------
+[참고]
+    - ASL 데이터셋은 datasets\sign_mnist_*.csv 로 포함되어 있습니다.
+    - MNIST/Fashion/KMNIST/CIFAR 는 처음 실행 시 자동 다운로드되어
+      data\ 폴더에 캐시됩니다.
+    - 소자 xlsx 는 "WriteVH, PulseNum, Conductance" 열을 가져야 하며
+      WriteVH>0 이 LTP, WriteVH<0 이 LTD 로 분리됩니다.
+    - 샘플 소자 파일: datasets\zno_encap_48h\0627_Pulse characteristic#1.xlsx
+============================================================
