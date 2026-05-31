@@ -227,6 +227,8 @@ def run_quick(knobs: dict, progress_cb=None, make_figures: bool = True) -> dict:
         },
         "energy_report": energy,
         "figures": figs,
+        "preds": preds_last,
+        "targets": targets_last,
         "num_classes": int(num_classes),
         "device": str(device),
     }
