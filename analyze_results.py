@@ -201,8 +201,8 @@ def write_report(df, ok, paired, out_md):
               f"- 평균 차이 (good − bad): **{gm - bm:+.2f}%p**", ""]
         if paired is not None and not paired.empty:
             d = (paired["good"] - paired["bad"])
-            worst = d.sort_values().head(5)
-            L.append("- 나쁜 소자에서 가장 크게 떨어진 설정 (good−bad):")
+            worst = d.sort_values(ascending=False).head(5)   # biggest good−bad gap
+            L.append("- 나쁜 소자에서 가장 크게 떨어진 설정 (good−bad 격차 큰 순):")
             for idx, val in worst.items():
                 L.append(f"    - {dict(zip(CONFIG_KEYS, idx))} → {val:+.2f}%p")
             L.append("")
